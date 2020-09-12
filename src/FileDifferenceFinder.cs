@@ -23,15 +23,11 @@
             SearchOption = searchOption;
             ComparisonTypes = comparisonTypes;
 
-            if (hashAlgorithm is null)
-            {
-                HashAlgorithm = HashAlgorithmType.None;
-            }
-            else if (comparisonTypes.HasFlag(FileComparisonTypes.Hash))
+            if (comparisonTypes.HasFlag(FileComparisonTypes.Hash))
             {
                 HashAlgorithm = hashAlgorithm ?? DefaultHashAlgorithm;
             }
-            else
+            else if (hashAlgorithm != null)
             {
                 throw new InvalidOperationException("No hash algorithm should be explicitly specified if no hashing is used.");
             }
