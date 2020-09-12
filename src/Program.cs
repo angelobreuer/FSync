@@ -24,27 +24,47 @@ static FileComparisonTypes GetFileComparisonTypes(CommandLineOptions options)
     return comparisonTypes;
 }
 
-static SearchOption GetSearchOption(CommandLineOptions options)
+static EnumerationOptions GetEnumerationOptions(CommandLineOptions options)
 {
+    var enumerationOptions = new EnumerationOptions();
+
     if (options.Recursive)
     {
-        return SearchOption.AllDirectories;
+        enumerationOptions.RecurseSubdirectories = true;
     }
-    else
+
+    if (options.IncludeSpecialDirectories)
     {
-        return SearchOption.TopDirectoryOnly;
+        enumerationOptions.ReturnSpecialDirectories = true;
     }
+
+    if (!options.IncludeEncrypted)
+    {
+        enumerationOptions.AttributesToSkip |= FileAttributes.Encrypted;
+    }
+
+    if (options.IncludeSystem)
+    {
+        enumerationOptions.AttributesToSkip &= ~FileAttributes.System;
+    }
+
+    if (!options.IncludeSparse)
+    {
+        enumerationOptions.AttributesToSkip |= FileAttributes.SparseFile;
+    }
+
+    return enumerationOptions;
 }
 
 static void Run(CommandLineOptions options)
 {
     var comparisonTypes = GetFileComparisonTypes(options);
-    var searchOption = GetSearchOption(options);
+    var searchOption = GetEnumerationOptions(options);
 
     var finder = new FileDifferenceFinder(
         firstDirectory: options.FirstDirectory,
         secondDirectory: options.SecondDirectory,
-        searchOption: searchOption,
+        enumerationOptions: GetEnumerationOptions(options),
         comparisonTypes: comparisonTypes,
         hashAlgorithm: options.Algorithm);
 

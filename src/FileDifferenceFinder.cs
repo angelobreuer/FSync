@@ -11,17 +11,33 @@
     public sealed class FileDifferenceFinder : IEnumerable<FileDifference>
     {
         public const HashAlgorithmType DefaultHashAlgorithm = HashAlgorithmType.MD5;
+        private const string FindAllPattern = "*";
+
+        private readonly EnumerationOptions _enumerationOptions;
+        private readonly bool _recurseSubdirectories;
 
         public FileDifferenceFinder(
             string firstDirectory, string secondDirectory,
-            SearchOption searchOption = SearchOption.AllDirectories,
+            EnumerationOptions enumerationOptions,
             FileComparisonTypes comparisonTypes = FileComparisonTypes.None,
             HashAlgorithmType? hashAlgorithm = null)
         {
+            if (enumerationOptions is null)
+            {
+                throw new ArgumentNullException(nameof(enumerationOptions));
+            }
+
             FirstDirectory = firstDirectory ?? throw new ArgumentNullException(nameof(firstDirectory));
             SecondDirectory = secondDirectory ?? throw new ArgumentNullException(nameof(secondDirectory));
-            SearchOption = searchOption;
             ComparisonTypes = comparisonTypes;
+
+            if (enumerationOptions.RecurseSubdirectories)
+            {
+                _recurseSubdirectories = true;
+            }
+
+            _enumerationOptions = CloneEnumerationOptions(enumerationOptions);
+            _enumerationOptions.RecurseSubdirectories = false; // we handle recursively by our own
 
             if (comparisonTypes.HasFlag(FileComparisonTypes.Hash))
             {
@@ -39,8 +55,6 @@
 
         public HashAlgorithmType HashAlgorithm { get; }
 
-        public SearchOption SearchOption { get; }
-
         public string SecondDirectory { get; }
 
         /// <inheritdoc/>
@@ -48,6 +62,17 @@
 
         /// <inheritdoc/>
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+
+        private static EnumerationOptions CloneEnumerationOptions(EnumerationOptions enumerationOptions) => new EnumerationOptions
+        {
+            AttributesToSkip = enumerationOptions.AttributesToSkip,
+            BufferSize = enumerationOptions.BufferSize,
+            IgnoreInaccessible = enumerationOptions.IgnoreInaccessible,
+            MatchCasing = enumerationOptions.MatchCasing,
+            MatchType = enumerationOptions.MatchType,
+            RecurseSubdirectories = enumerationOptions.RecurseSubdirectories,
+            ReturnSpecialDirectories = enumerationOptions.ReturnSpecialDirectories
+        };
 
         private bool CompareByHash(FileInfo firstFileInfo, FileInfo secondFileInfo)
         {
@@ -115,19 +140,32 @@
                 throw new InvalidOperationException("One of source directory or target directory must be not null.");
             }
 
-            var firstDirectoryFiles = firstDirectory is null ? Enumerable.Empty<string>() : Directory.EnumerateFiles(firstDirectory);
-            var secondDirectoryFiles = secondDirectory is null ? Enumerable.Empty<string>() : Directory.EnumerateFiles(secondDirectory);
+            var firstDirectoryFiles = firstDirectory is null
+                ? Enumerable.Empty<string>()
+                : Directory.EnumerateFiles(firstDirectory, FindAllPattern, _enumerationOptions);
+
+            var secondDirectoryFiles = secondDirectory is null
+                ? Enumerable.Empty<string>()
+                : Directory.EnumerateFiles(secondDirectory, FindAllPattern, _enumerationOptions);
 
             differenceChain = differenceChain.Concat(FindDifferencesCore(firstDirectoryFiles, secondDirectoryFiles));
 
-            var firstDirectorySubDirectories = firstDirectory is null ? Enumerable.Empty<string>() : Directory.EnumerateDirectories(firstDirectory).ToArray();
-            var secondDirectorySubDirectories = secondDirectory is null ? Enumerable.Empty<string>() : Directory.EnumerateDirectories(secondDirectory).ToArray();
-
-            var diffDirectories = firstDirectorySubDirectories.Diff(secondDirectorySubDirectories, DirectoryNameEqualityComparer.Instance);
-
-            foreach (var directoryDifference in diffDirectories)
+            if (_recurseSubdirectories)
             {
-                FindDifferences(directoryDifference.Left, directoryDifference.Right, ref differenceChain);
+                var firstDirectorySubDirectories = firstDirectory is null
+                    ? Enumerable.Empty<string>()
+                    : Directory.EnumerateDirectories(firstDirectory, FindAllPattern, _enumerationOptions).ToArray();
+
+                var secondDirectorySubDirectories = secondDirectory is null
+                    ? Enumerable.Empty<string>()
+                    : Directory.EnumerateDirectories(secondDirectory, FindAllPattern, _enumerationOptions).ToArray();
+
+                var diffDirectories = firstDirectorySubDirectories.Diff(secondDirectorySubDirectories, DirectoryNameEqualityComparer.Instance);
+
+                foreach (var directoryDifference in diffDirectories)
+                {
+                    FindDifferences(directoryDifference.Left, directoryDifference.Right, ref differenceChain);
+                }
             }
         }
 

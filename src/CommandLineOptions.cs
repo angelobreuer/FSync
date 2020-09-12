@@ -16,6 +16,21 @@
         [Value(0, Required = true)]
         public string FirstDirectory { get; set; } = null!;
 
+        [Option('e', "include-encrypted")]
+        public bool IncludeEncrypted { get; set; }
+
+        [Option('h', "include-hidden")]
+        public bool IncludeHidden { get; set; }
+
+        [Option('o', "include-sparse")]
+        public bool IncludeSparse { get; set; }
+
+        [Option('y', "special-directories")]
+        public bool IncludeSpecialDirectories { get; set; }
+
+        [Option('m', "include-system")]
+        public bool IncludeSystem { get; set; }
+
         [Option('r', "recursive")]
         public bool Recursive { get; set; }
 
