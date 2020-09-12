@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30428.66
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FSync", "FSync.csproj", "{00D3BBF2-AD6D-4661-A05D-763F4476C656}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{00D3BBF2-AD6D-4661-A05D-763F4476C656}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{00D3BBF2-AD6D-4661-A05D-763F4476C656}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{00D3BBF2-AD6D-4661-A05D-763F4476C656}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{00D3BBF2-AD6D-4661-A05D-763F4476C656}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C75D3F42-6C6F-40D5-9BBF-A04446D57E31}
+	EndGlobalSection
+EndGlobal
