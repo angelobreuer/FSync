@@ -39,5 +39,8 @@
 
         [Option('s', "simulate")]
         public bool Simulate { get; set; }
+
+        [Option('w', "wildcard", Default = "*")]
+        public string Wildcard { get; set; } = "*";
     }
 }

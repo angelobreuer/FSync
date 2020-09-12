@@ -70,7 +70,7 @@ static void Run(CommandLineOptions options)
 
     using var fileCopyQueue = new FileCopyQueue();
 
-    foreach (var fileDifference in finder)
+    foreach (var fileDifference in finder.FindDifferences(options.Wildcard))
     {
         Console.WriteLine($"{fileDifference.DifferenceType}  -  {fileDifference.OldFile}  -  {fileDifference.NewFile}");
 

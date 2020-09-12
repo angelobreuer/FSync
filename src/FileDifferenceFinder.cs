@@ -57,6 +57,13 @@
 
         public string SecondDirectory { get; }
 
+        public IEnumerable<FileDifference> FindDifferences(string wildcard = FindAllPattern)
+        {
+            var differenceChain = Enumerable.Empty<FileDifference>();
+            FindDifferences(FirstDirectory, SecondDirectory, wildcard, ref differenceChain);
+            return differenceChain;
+        }
+
         /// <inheritdoc/>
         public IEnumerator<FileDifference> GetEnumerator() => FindDifferences().GetEnumerator();
 
@@ -126,14 +133,7 @@
             return true;
         }
 
-        private IEnumerable<FileDifference> FindDifferences()
-        {
-            var differenceChain = Enumerable.Empty<FileDifference>();
-            FindDifferences(FirstDirectory, SecondDirectory, ref differenceChain);
-            return differenceChain;
-        }
-
-        private void FindDifferences(string? firstDirectory, string? secondDirectory, ref IEnumerable<FileDifference> differenceChain)
+        private void FindDifferences(string? firstDirectory, string? secondDirectory, string wildcard, ref IEnumerable<FileDifference> differenceChain)
         {
             if (firstDirectory is null && secondDirectory is null)
             {
@@ -142,11 +142,11 @@
 
             var firstDirectoryFiles = firstDirectory is null
                 ? Enumerable.Empty<string>()
-                : Directory.EnumerateFiles(firstDirectory, FindAllPattern, _enumerationOptions);
+                : Directory.EnumerateFiles(firstDirectory, wildcard, _enumerationOptions);
 
             var secondDirectoryFiles = secondDirectory is null
                 ? Enumerable.Empty<string>()
-                : Directory.EnumerateFiles(secondDirectory, FindAllPattern, _enumerationOptions);
+                : Directory.EnumerateFiles(secondDirectory, wildcard, _enumerationOptions);
 
             differenceChain = differenceChain.Concat(FindDifferencesCore(firstDirectoryFiles, secondDirectoryFiles));
 
@@ -164,7 +164,7 @@
 
                 foreach (var directoryDifference in diffDirectories)
                 {
-                    FindDifferences(directoryDifference.Left, directoryDifference.Right, ref differenceChain);
+                    FindDifferences(directoryDifference.Left, directoryDifference.Right, wildcard, ref differenceChain);
                 }
             }
         }
