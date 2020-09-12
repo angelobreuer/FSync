@@ -120,8 +120,8 @@
 
             differenceChain = differenceChain.Concat(FindDifferencesCore(firstDirectoryFiles, secondDirectoryFiles));
 
-            var firstDirectorySubDirectories = Directory.EnumerateDirectories(FirstDirectory).ToArray();
-            var secondDirectorySubDirectories = Directory.EnumerateDirectories(SecondDirectory).ToArray();
+            var firstDirectorySubDirectories = firstDirectory is null ? Enumerable.Empty<string>() : Directory.EnumerateDirectories(firstDirectory).ToArray();
+            var secondDirectorySubDirectories = secondDirectory is null ? Enumerable.Empty<string>() : Directory.EnumerateDirectories(secondDirectory).ToArray();
 
             var diffDirectories = firstDirectorySubDirectories.Diff(secondDirectorySubDirectories, DirectoryNameEqualityComparer.Instance);
 
