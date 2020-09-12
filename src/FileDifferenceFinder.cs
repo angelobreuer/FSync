@@ -56,7 +56,7 @@
         private bool CompareByHash(FileInfo firstFileInfo, FileInfo secondFileInfo)
         {
             using var hashAlgorithm = System.Security.Cryptography.HashAlgorithm.Create(HashAlgorithm.ToString())
-                ?? throw new InvalidOperationException("Invalid hash algorithm.");
+                ?? throw new InvalidOperationException($"Invalid hash algorithm: {HashAlgorithm}.");
 
             byte[] firstFileHash;
             using (var firstFileInfoFileStream = firstFileInfo.OpenRead())
