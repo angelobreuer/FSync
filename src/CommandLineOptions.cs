@@ -4,9 +4,6 @@
 
     internal class CommandLineOptions
     {
-        [Option('D', "allow-delete")]
-        public bool AllowDelete { get; set; }
-
         [Option('a', "algorithm")]
         public HashAlgorithmType? Algorithm { get; set; }
 

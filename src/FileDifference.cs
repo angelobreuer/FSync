@@ -1,29 +1,21 @@
 ﻿namespace FSync
 {
     using System;
-    using System.Diagnostics.CodeAnalysis;
     using System.IO;
 
     public readonly struct FileDifference
     {
-        public FileDifference(FileDifferenceType differenceType, FileInfo? newFile, FileInfo? oldFile)
+        public FileDifference(FileDifferenceType differenceType, FileInfo sourceFile, FileInfo targetFile)
         {
-            if (newFile is null && oldFile is null)
-            {
-                throw new InvalidOperationException("One of new file or old file must be provided.");
-            }
-
             DifferenceType = differenceType;
-            NewFile = newFile;
-            OldFile = oldFile;
+            SourceFile = sourceFile ?? throw new ArgumentNullException(nameof(sourceFile));
+            TargetFile = targetFile ?? throw new ArgumentNullException(nameof(targetFile));
         }
 
         public FileDifferenceType DifferenceType { get; }
 
-        [NotNullIfNotNull(nameof(OldFile))]
-        public FileInfo? NewFile { get; }
+        public FileInfo SourceFile { get; }
 
-        [NotNullIfNotNull(nameof(NewFile))]
-        public FileInfo? OldFile { get; }
+        public FileInfo TargetFile { get; }
     }
 }

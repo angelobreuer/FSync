@@ -4,7 +4,6 @@
     {
         None,
         Created,
-        Deleted,
         Modified
     }
 }

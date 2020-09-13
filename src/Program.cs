@@ -79,23 +79,12 @@ static void Run(CommandLineOptions options)
 
     foreach (var fileDifference in finder.FindDifferences(options.Wildcard))
     {
-        if (fileDifference.DifferenceType is FileDifferenceType.Deleted && !options.AllowDelete)
-        {
-            continue;
-        }
-
         var severity = fileDifference.DifferenceType is FileDifferenceType.None
             ? LogLevel.Debug
             : LogLevel.Information;
 
-        var relativePathToOldFile = fileDifference.OldFile is null
-            ? "(null)" : Path.GetRelativePath(options.SecondDirectory, fileDifference.OldFile.FullName);
-
-        var relativePathToNewFile = fileDifference.NewFile is null
-            ? "(null)" : Path.GetRelativePath(options.FirstDirectory, fileDifference.NewFile.FullName);
-
         logger.Log(severity, "[{Type}] {OldFile} --> {NewFile}",
-            fileDifference.DifferenceType, relativePathToOldFile, relativePathToNewFile);
+            fileDifference.DifferenceType, fileDifference.TargetFile?.FullName, fileDifference.SourceFile?.FullName);
 
         if (!options.Simulate)
         {
@@ -106,25 +95,8 @@ static void Run(CommandLineOptions options)
 
 static void Apply(FileCopyQueue fileCopyQueue, FileDifference fileDifference, CommandLineOptions options)
 {
-    switch (fileDifference.DifferenceType)
+    if (fileDifference.DifferenceType is FileDifferenceType.Created or FileDifferenceType.Modified)
     {
-        case FileDifferenceType.Created:
-            var sourceFilePath = Path.Combine(
-                options.SecondDirectory,
-                Path.GetRelativePath(options.FirstDirectory, fileDifference.NewFile!.FullName));
-
-            var targetFileInfo = new FileInfo(sourceFilePath);
-            targetFileInfo.Directory!.Create();
-
-            fileCopyQueue.Enqueue(fileDifference.NewFile, targetFileInfo);
-            break;
-
-        case FileDifferenceType.Deleted:
-            fileDifference.OldFile!.Delete();
-            break;
-
-        case FileDifferenceType.Modified:
-            fileCopyQueue.Enqueue(fileDifference.OldFile!, fileDifference.NewFile!);
-            break;
+        fileCopyQueue.Enqueue(fileDifference.SourceFile, fileDifference.TargetFile);
     }
 }

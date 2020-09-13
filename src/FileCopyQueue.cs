@@ -85,6 +85,9 @@
                     _logger.LogDebug("[{WorkerName}] Copying {SourceFile} to {TargetFile}...",
                         workerName, sourceFileInfo.FullName, targetFileInfo.FullName);
 
+                    sourceFileInfo.Directory?.Create();
+                    targetFileInfo.Directory?.Create();
+
                     try
                     {
                         using var sourceFileStream = sourceFileInfo.OpenReadSafe();

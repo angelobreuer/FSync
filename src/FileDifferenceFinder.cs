@@ -141,11 +141,11 @@
 
             var firstDirectoryFiles = firstDirectory is null
                 ? Enumerable.Empty<string>()
-                : Directory.EnumerateFiles(firstDirectory, wildcard, _enumerationOptions);
+                : Directory.EnumerateFiles(firstDirectory, wildcard, _enumerationOptions).ToArray();
 
             var secondDirectoryFiles = secondDirectory is null
                 ? Enumerable.Empty<string>()
-                : Directory.EnumerateFiles(secondDirectory, wildcard, _enumerationOptions);
+                : Directory.EnumerateFiles(secondDirectory, wildcard, _enumerationOptions).ToArray();
 
             differenceChain = differenceChain.Concat(FindDifferencesCore(firstDirectoryFiles, secondDirectoryFiles));
 
@@ -186,30 +186,40 @@
                     if (comparisonResult < 0)
                     {
                         // left file is older
-                        yield return new FileDifference(FileDifferenceType.Modified, newFile: left, oldFile: right);
+                        yield return new FileDifference(FileDifferenceType.Modified, sourceFile: left, targetFile: right);
                     }
                     else if (comparisonResult > 0)
                     {
                         // right file is older
-                        yield return new FileDifference(FileDifferenceType.Modified, newFile: right, oldFile: left);
+                        yield return new FileDifference(FileDifferenceType.Modified, sourceFile: right, targetFile: left);
                     }
                     else
                     {
                         // files are equal
-                        yield return new FileDifference(FileDifferenceType.None, newFile: left, oldFile: right);
+                        yield return new FileDifference(FileDifferenceType.None, sourceFile: left, targetFile: right);
                     }
                 }
                 else if (fileDifference.IsLeft)
                 {
                     var left = new FileInfo(fileDifference.Left);
 
-                    yield return new FileDifference(FileDifferenceType.Created, newFile: left, oldFile: null);
+                    var right = new FileInfo(Path.Combine(
+                        path1: SecondDirectory,
+                        path2: Path.GetRelativePath(FirstDirectory, left.DirectoryName!),
+                        path3: left.Name));
+
+                    yield return new FileDifference(FileDifferenceType.Created, sourceFile: left, targetFile: right);
                 }
                 else
                 {
                     var right = new FileInfo(fileDifference.Right);
 
-                    yield return new FileDifference(FileDifferenceType.Deleted, newFile: null, oldFile: right);
+                    var left = new FileInfo(Path.Combine(
+                        path1: FirstDirectory,
+                        path2: Path.GetRelativePath(SecondDirectory, right.DirectoryName!),
+                        path3: right.Name));
+
+                    yield return new FileDifference(FileDifferenceType.Created, sourceFile: right, targetFile: left);
                 }
             }
         }
