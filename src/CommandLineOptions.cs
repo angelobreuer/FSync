@@ -4,13 +4,16 @@
 
     internal class CommandLineOptions
     {
+        [Option('D', "allow-delete")]
+        public bool AllowDelete { get; set; }
+
         [Option('a', "algorithm")]
         public HashAlgorithmType? Algorithm { get; set; }
 
-        [Option('h', "hash")]
+        [Option('H', "hash")]
         public bool CompareHash { get; set; }
 
-        [Option('k', "size")]
+        [Option('S', "size")]
         public bool CompareSize { get; set; }
 
         [Value(0, Required = true)]
@@ -25,13 +28,13 @@
         [Option('o', "include-sparse")]
         public bool IncludeSparse { get; set; }
 
-        [Option('y', "special-directories")]
+        [Option('d', "special-directories")]
         public bool IncludeSpecialDirectories { get; set; }
 
         [Option('m', "include-system")]
         public bool IncludeSystem { get; set; }
 
-        [Option('r', "recursive")]
+        [Option('R', "recursive")]
         public bool Recursive { get; set; }
 
         [Value(1, Required = true)]

@@ -79,6 +79,11 @@ static void Run(CommandLineOptions options)
 
     foreach (var fileDifference in finder.FindDifferences(options.Wildcard))
     {
+        if (fileDifference.DifferenceType is FileDifferenceType.Deleted && !options.AllowDelete)
+        {
+            continue;
+        }
+
         var severity = fileDifference.DifferenceType is FileDifferenceType.None
             ? LogLevel.Debug
             : LogLevel.Information;
