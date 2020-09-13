@@ -60,7 +60,7 @@
 
         private void RunCopyWorker()
         {
-            if (_copyQueue.Count <= 0)
+            if (_copyQueue.IsEmpty)
             {
                 return;
             }

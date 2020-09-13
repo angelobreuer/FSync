@@ -58,6 +58,9 @@ static EnumerationOptions GetEnumerationOptions(CommandLineOptions options)
 
 static void Run(CommandLineOptions options)
 {
+    Directory.CreateDirectory(options.FirstDirectory);
+    Directory.CreateDirectory(options.SecondDirectory);
+
     var comparisonTypes = GetFileComparisonTypes(options);
     var searchOption = GetEnumerationOptions(options);
 
@@ -79,8 +82,6 @@ static void Run(CommandLineOptions options)
             Apply(fileCopyQueue, fileDifference, options);
         }
     }
-
-    fileCopyQueue.Drain();
 }
 
 static void Apply(FileCopyQueue fileCopyQueue, FileDifference fileDifference, CommandLineOptions options)
@@ -89,10 +90,13 @@ static void Apply(FileCopyQueue fileCopyQueue, FileDifference fileDifference, Co
     {
         case FileDifferenceType.Created:
             var sourceFilePath = Path.Combine(
-                options.FirstDirectory,
-                Path.GetRelativePath(options.SecondDirectory, fileDifference.OldFile!.FullName));
+                options.SecondDirectory,
+                Path.GetRelativePath(options.FirstDirectory, fileDifference.NewFile!.FullName));
 
-            fileCopyQueue.Enqueue(new FileInfo(sourceFilePath), fileDifference.NewFile!);
+            var targetFileInfo = new FileInfo(sourceFilePath);
+            targetFileInfo.Directory!.Create();
+
+            fileCopyQueue.Enqueue(fileDifference.NewFile, targetFileInfo);
             break;
 
         case FileDifferenceType.Deleted:
