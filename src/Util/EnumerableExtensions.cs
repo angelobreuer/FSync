@@ -26,7 +26,7 @@
                 rightList.Add(rightItem);
             }
 
-            foreach (var leftItem in leftList.Except(rightList, equalityComparer))
+            foreach (var leftItem in leftList.Where(x => !rightList.Any(j => equalityComparer.Equals(x, j))))
             {
                 yield return Difference<T>.CreateLeft(leftItem);
             }

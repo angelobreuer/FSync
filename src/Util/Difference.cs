@@ -30,5 +30,19 @@
 
         public static Difference<T> CreateRight(T right)
             => new Difference<T>(type: 2, right: right);
+
+        /// <inheritdoc/>
+        public override string ToString()
+        {
+            var status = _type switch
+            {
+                0 => "Left",
+                1 => "Intersecting",
+                2 => "Right",
+                _ => "Invalid State"
+            };
+
+            return $"{Left} <> {Right} ({status})";
+        }
     }
 }

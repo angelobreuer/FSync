@@ -1,4 +1,4 @@
-﻿namespace FSync.Comparers
+﻿namespace FSync.Util
 {
     using System;
     using System.Collections.Generic;

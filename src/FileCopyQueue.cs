@@ -9,14 +9,14 @@
 
     public sealed class FileCopyQueue : IDisposable
     {
-        private readonly ConcurrentQueue<KeyValuePair<FileStream, FileStream>> _copyQueue;
+        private readonly ConcurrentQueue<KeyValuePair<FileInfo, FileInfo>> _copyQueue;
         private bool _disposed;
         private int _workerCount;
         private int _workerId;
 
         public FileCopyQueue()
         {
-            _copyQueue = new ConcurrentQueue<KeyValuePair<FileStream, FileStream>>();
+            _copyQueue = new ConcurrentQueue<KeyValuePair<FileInfo, FileInfo>>();
         }
 
         public void Dispose()
@@ -49,8 +49,7 @@
                 throw new ArgumentNullException(nameof(targetFileInfo));
             }
 
-            _copyQueue.Enqueue(new KeyValuePair<FileStream, FileStream>(
-                sourceFileInfo.OpenReadSafe(), targetFileInfo.Create()));
+            _copyQueue.Enqueue(KeyValuePair.Create(sourceFileInfo, targetFileInfo));
 
             if (_workerCount < Environment.ProcessorCount)
             {
@@ -81,21 +80,20 @@
                     {
                         misses = 0;
 
+                        var (sourceFileInfo, targetFileInfo) = streamPair;
+                        using var sourceFileStream = sourceFileInfo.OpenReadSafe();
+                        using var targetFileStream = targetFileInfo.Create();
+
                         try
                         {
-                            while ((length = streamPair.Key.Read(buffer, 0, buffer.Length)) > 0)
+                            while ((length = sourceFileStream.Read(buffer, 0, buffer.Length)) > 0)
                             {
-                                streamPair.Value.Write(buffer, 0, length);
+                                targetFileStream.Write(buffer, 0, length);
                             }
                         }
                         catch (Exception)
                         {
                             Console.Error.WriteLine("[{WorkerName}] Failed to copy {SourceFile} to {TargetFile}...", workerName, streamPair.Key.Name, streamPair.Value.Name);
-                        }
-                        finally
-                        {
-                            streamPair.Key.Dispose();
-                            streamPair.Value.Dispose();
                         }
                     }
 

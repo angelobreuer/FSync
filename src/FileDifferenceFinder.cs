@@ -5,7 +5,6 @@
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
-    using FSync.Comparers;
     using FSync.Util;
 
     public sealed class FileDifferenceFinder : IEnumerable<FileDifference>
@@ -160,7 +159,9 @@
                     ? Enumerable.Empty<string>()
                     : Directory.EnumerateDirectories(secondDirectory, FindAllPattern, _enumerationOptions).ToArray();
 
-                var diffDirectories = firstDirectorySubDirectories.Diff(secondDirectorySubDirectories, DirectoryNameEqualityComparer.Instance);
+                // NOTE: We treat the directory names as file names because they have similar
+                // behavior when matching them
+                var diffDirectories = firstDirectorySubDirectories.Diff(secondDirectorySubDirectories, FileNameEqualityComparer.Instance);
 
                 foreach (var directoryDifference in diffDirectories)
                 {
@@ -171,7 +172,7 @@
 
         private IEnumerable<FileDifference> FindDifferencesCore(IEnumerable<string> firstDirectoryFileNames, IEnumerable<string> secondDirectoryFileNames)
         {
-            var fileDifferences = firstDirectoryFileNames.Diff(secondDirectoryFileNames, FileNameEqualityComparer.Instance);
+            var fileDifferences = firstDirectoryFileNames.Diff(secondDirectoryFileNames, FileNameEqualityComparer.Instance).ToArray(); // TODO remove ToArray()
 
             foreach (var fileDifference in fileDifferences)
             {
