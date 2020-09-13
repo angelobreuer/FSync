@@ -1,7 +1,7 @@
-﻿using System;
-using System.IO;
+﻿using System.IO;
 using CommandLine;
 using FSync;
+using Microsoft.Extensions.Logging;
 
 var commandLineOptions = Parser.Default.ParseArguments<CommandLineOptions>(args);
 
@@ -63,6 +63,10 @@ static void Run(CommandLineOptions options)
 
     var comparisonTypes = GetFileComparisonTypes(options);
     var searchOption = GetEnumerationOptions(options);
+    var minimumLogLevel = options.Verbose ? LogLevel.Trace : LogLevel.Information;
+
+    using var loggerFactory = LoggerFactory.Create(x => x.AddConsole().SetMinimumLevel(minimumLogLevel));
+    var logger = loggerFactory.CreateLogger("Program");
 
     var finder = new FileDifferenceFinder(
         firstDirectory: options.FirstDirectory,
@@ -71,11 +75,22 @@ static void Run(CommandLineOptions options)
         comparisonTypes: comparisonTypes,
         hashAlgorithm: options.Algorithm);
 
-    using var fileCopyQueue = new FileCopyQueue();
+    using var fileCopyQueue = new FileCopyQueue(loggerFactory.CreateLogger<FileCopyQueue>());
 
     foreach (var fileDifference in finder.FindDifferences(options.Wildcard))
     {
-        Console.WriteLine($"{fileDifference.DifferenceType}  -  {fileDifference.OldFile}  -  {fileDifference.NewFile}");
+        var severity = fileDifference.DifferenceType is FileDifferenceType.None
+            ? LogLevel.Debug
+            : LogLevel.Information;
+
+        var relativePathToOldFile = fileDifference.OldFile is null
+            ? "(null)" : Path.GetRelativePath(options.SecondDirectory, fileDifference.OldFile.FullName);
+
+        var relativePathToNewFile = fileDifference.NewFile is null
+            ? "(null)" : Path.GetRelativePath(options.FirstDirectory, fileDifference.NewFile.FullName);
+
+        logger.Log(severity, "[{Type}] {OldFile} --> {NewFile}",
+            fileDifference.DifferenceType, relativePathToOldFile, relativePathToNewFile);
 
         if (!options.Simulate)
         {

@@ -6,17 +6,20 @@
     using System.IO;
     using System.Threading;
     using FSync.Util;
+    using Microsoft.Extensions.Logging;
 
     public sealed class FileCopyQueue : IDisposable
     {
         private readonly ConcurrentQueue<KeyValuePair<FileInfo, FileInfo>> _copyQueue;
+        private readonly ILogger<FileCopyQueue> _logger;
         private bool _disposed;
         private int _workerCount;
         private int _workerId;
 
-        public FileCopyQueue()
+        public FileCopyQueue(ILogger<FileCopyQueue> logger)
         {
             _copyQueue = new ConcurrentQueue<KeyValuePair<FileInfo, FileInfo>>();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public void Dispose()
@@ -26,8 +29,8 @@
                 return;
             }
 
-            _disposed = true;
             Drain();
+            _disposed = true;
         }
 
         public void Drain() => SpinWait.SpinUntil(() => _workerCount == 0 && _copyQueue.IsEmpty);
@@ -68,40 +71,41 @@
             Thread.CurrentThread.Name = workerName;
             Interlocked.Increment(ref _workerCount);
 
+            _logger.LogDebug("Started worker {Name}.", workerName);
+
             try
             {
                 var buffer = new byte[1024 * 1024 * 4]; // 4 MiB
-                var misses = 0;
                 int length;
 
-                while (misses++ < 100 && !_disposed)
+                while (_copyQueue.TryDequeue(out var streamPair))
                 {
-                    while (_copyQueue.TryDequeue(out var streamPair))
-                    {
-                        misses = 0;
+                    var (sourceFileInfo, targetFileInfo) = streamPair;
 
-                        var (sourceFileInfo, targetFileInfo) = streamPair;
+                    _logger.LogDebug("[{WorkerName}] Copying {SourceFile} to {TargetFile}...",
+                        workerName, sourceFileInfo.FullName, targetFileInfo.FullName);
+
+                    try
+                    {
                         using var sourceFileStream = sourceFileInfo.OpenReadSafe();
                         using var targetFileStream = targetFileInfo.Create();
 
-                        try
+                        while ((length = sourceFileStream.Read(buffer, 0, buffer.Length)) > 0)
                         {
-                            while ((length = sourceFileStream.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                targetFileStream.Write(buffer, 0, length);
-                            }
-                        }
-                        catch (Exception)
-                        {
-                            Console.Error.WriteLine("[{WorkerName}] Failed to copy {SourceFile} to {TargetFile}...", workerName, streamPair.Key.Name, streamPair.Value.Name);
+                            targetFileStream.Write(buffer, 0, length);
                         }
                     }
-
-                    Thread.Sleep(100);
+                    catch (Exception)
+                    {
+                        _logger.LogWarning("[{WorkerName}] Failed to copy {SourceFile} to {TargetFile}...",
+                            workerName, sourceFileInfo.FullName, targetFileInfo.FullName);
+                    }
                 }
             }
             finally
             {
+                _logger.LogDebug("Stopped worker {Name}.", workerName);
+
                 Interlocked.Decrement(ref _workerCount);
             }
         }

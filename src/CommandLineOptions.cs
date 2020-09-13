@@ -19,7 +19,7 @@
         [Option('e', "include-encrypted")]
         public bool IncludeEncrypted { get; set; }
 
-        [Option('h', "include-hidden")]
+        [Option('j', "include-hidden")]
         public bool IncludeHidden { get; set; }
 
         [Option('o', "include-sparse")]
@@ -39,6 +39,9 @@
 
         [Option('s', "simulate")]
         public bool Simulate { get; set; }
+
+        [Option('v', "verbose")]
+        public bool Verbose { get; set; }
 
         [Option('w', "wildcard", Default = "*")]
         public string Wildcard { get; set; } = "*";
